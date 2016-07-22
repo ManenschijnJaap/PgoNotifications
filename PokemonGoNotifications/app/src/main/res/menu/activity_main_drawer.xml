@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_tracker"
+            android:icon="@drawable/ic_menu_camera"
+            android:title="Tracker" />
+        <item
+            android:id="@+id/nav_tracker_rare"
+            android:icon="@drawable/ic_menu_gallery"
+            android:title="Rare tracker" />
+        <item
+            android:id="@+id/nav_notifications"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="Notification preferences" />
+        <item
+            android:id="@+id/nav_logout"
+            android:icon="@drawable/ic_menu_slideshow"
+            android:title="Logout" />
+    </group>
+
+</menu>
