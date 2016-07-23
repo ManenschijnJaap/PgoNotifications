@@ -32,6 +32,7 @@ import com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFrag
 import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
 import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
 import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
+import com.moonshine.pokemongonotifications.receivers.TokenRefreshReceiver;
 import com.moonshine.pokemongonotifications.services.ScanService;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
@@ -81,6 +82,19 @@ public class MainActivity extends AppCompatActivity
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);
         checkPermissions();
+        if (UserPreferences.getLoginType(this).equalsIgnoreCase("google")){
+            periodicallyRefreshToken();
+        }
+    }
+
+    private void periodicallyRefreshToken(){
+        Intent intent = new Intent(MainActivity.this, TokenRefreshReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        long frequency= 3 * 60 * 1000; // in ms
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
     }
 
     private void checkPermissions(){

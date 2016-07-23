@@ -84,7 +84,31 @@ public class GoogleManager {
         Callback<GoogleService.TokenResponse> googleCallback = new Callback<GoogleService.TokenResponse>() {
             @Override
             public void onResponse(Call<GoogleService.TokenResponse> call, Response<GoogleService.TokenResponse> response) {
-                callBack.authSuccessful(response.body().getIdToken());
+                callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
+            }
+
+            @Override
+            public void onFailure(Call<GoogleService.TokenResponse> call, Throwable t) {
+                t.printStackTrace();
+                callBack.authFailed("Failed on requesting the id token");
+            }
+        };
+        Call<GoogleService.TokenResponse> call = mGoogleService.requestToken(url.toString());
+        call.enqueue(googleCallback);
+    }
+
+    public void refreshToken(String refreshToken, final CallBack callBack){
+        HttpUrl url = HttpUrl.parse(OAUTH_TOKEN_ENDPOINT).newBuilder()
+                .addQueryParameter("client_id", CLIENT_ID)
+                .addQueryParameter("client_secret", SECRET)
+                .addQueryParameter("grant_type", "refresh_token")
+                .addQueryParameter("refresh_token", refreshToken)
+                .build();
+
+        Callback<GoogleService.TokenResponse> googleCallback = new Callback<GoogleService.TokenResponse>() {
+            @Override
+            public void onResponse(Call<GoogleService.TokenResponse> call, Response<GoogleService.TokenResponse> response) {
+                callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
             }
 
             @Override
@@ -98,7 +122,7 @@ public class GoogleManager {
     }
 
     public interface CallBack {
-        void authSuccessful(String authToken);
+        void authSuccessful(String authToken, String refreshToken);
         void authFailed(String message);
         void authRequested(GoogleService.AuthRequest body);
     }

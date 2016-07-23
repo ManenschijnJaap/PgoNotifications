@@ -35,7 +35,7 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.0.0'
     compile 'com.squareup.retrofit2:converter-gson:2.0.0'
     compile 'com.squareup.okhttp:logging-interceptor:2.6.0'
-    compile 'com.github.Grover-c13:PokeGOAPI-Java:4f5b715380'
+    compile 'com.github.Grover-c13:PokeGOAPI-Java:2e14fab7f0'
 
     apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
     // use kapt for kotlin apt

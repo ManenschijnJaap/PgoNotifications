@@ -12,6 +12,7 @@ public class UserPreferences {
     private static String usernameKey = "UserName";
     private static String loginTypeKey = "LoginType";
     private static String notificationsKey = "POkeNotifications";
+    private static String refreshTokenKey = "refreshToken";
 
     private static SharedPreferences getPreferences(Context context){
         return context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
@@ -55,5 +56,14 @@ public class UserPreferences {
 
     public static String getNotificationIds(Context context) {
         return getPreferences(context).getString(notificationsKey, "");
+    }
+
+    public static void saveRefreshToken(Context context, String refreshToken){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putString(refreshTokenKey, refreshToken).commit();
+    }
+
+    public static String getRefreshToken(Context context){
+        return getPreferences(context).getString(refreshTokenKey, null);
     }
 }

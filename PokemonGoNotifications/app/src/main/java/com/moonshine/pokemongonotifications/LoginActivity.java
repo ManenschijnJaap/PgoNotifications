@@ -84,11 +84,12 @@ public class LoginActivity extends AppCompatActivity {
         mGoogleManager = GoogleManager.getInstance();
         mCallbackGoogle = new GoogleManager.CallBack() {
             @Override
-            public void authSuccessful(String authToken) {
+            public void authSuccessful(String authToken, String refreshToken) {
                 showProgress(false);
                 Log.d(TAG, "authSuccessful() called with: authToken = [" + authToken + "]");
                 UserPreferences.saveToken(LoginActivity.this, authToken);
                 UserPreferences.setLoginType(LoginActivity.this, "google");
+                UserPreferences.saveRefreshToken(LoginActivity.this, refreshToken);
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
 //                        MainActivity.start(LoginActivity.this, authToken, MainActivity.PROVIDER_GOOGLE);

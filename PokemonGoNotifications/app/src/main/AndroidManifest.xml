@@ -7,10 +7,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
+        android:name=".NotificationApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name=".NotificationApplication"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity
@@ -41,7 +41,15 @@
         <receiver
             android:name=".receivers.PokemonReceiver"
             android:enabled="true"
-            android:exported="false"></receiver>
+            android:exported="false" />
+        <receiver
+            android:name=".receivers.TokenRefreshReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <service
+            android:name=".services.RefreshTokenService"
+            android:exported="false"></service>
     </application>
 
 </manifest>
