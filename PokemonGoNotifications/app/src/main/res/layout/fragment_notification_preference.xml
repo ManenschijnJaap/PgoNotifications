@@ -1,0 +1,20 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context="com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFragment">
+
+    <TextView
+        android:layout_margin="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="To receive notifications when a certain pokemon is near, please select all the pokemon you are interested in by clicking them."/>
+
+    <GridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"></GridView>
+
+
+</LinearLayout>

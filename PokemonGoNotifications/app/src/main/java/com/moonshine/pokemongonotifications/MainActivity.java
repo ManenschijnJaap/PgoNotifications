@@ -6,6 +6,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.Fragment;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -19,6 +20,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
+import com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFragment;
+import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
+import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
 import com.pokegoapi.auth.GoogleLogin;
@@ -57,13 +61,17 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+        navigationView.setCheckedItem(R.id.nav_tracker);
 
-
+        showFragment(TrackerFragment.newInstance());
         mLastLocation = new Location("");
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);
-        setupMenu();
         getPokemon();
+    }
+
+    private void showFragment(Fragment fragment){
+        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commitAllowingStateLoss();
     }
 
     private RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo getAuth(OkHttpClient httpClient){
@@ -142,13 +150,6 @@ public class MainActivity extends AppCompatActivity
         asyncTask.execute();
     }
 
-    private void setupMenu(){
-        TextView username = (TextView) findViewById(R.id.loggedInAsTextView);
-        if(username != null){
-            username.setText(UserPreferences.getUsername(this));
-        }
-    }
-
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -183,11 +184,11 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_tracker) {
-            // Handle the camera action
+            showFragment(TrackerFragment.newInstance());
         } else if (id == R.id.nav_tracker_rare) {
-
+            showFragment(RareTrackerFragment.newInstance());
         } else if (id == R.id.nav_notifications) {
-
+            showFragment(NotificationPreferenceFragment.newInstance());
         } else if (id == R.id.nav_logout) {
             UserPreferences.clearPreferences(this);
             startActivity(new Intent(this, LoginActivity.class));
