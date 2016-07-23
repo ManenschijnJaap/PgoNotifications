@@ -59,32 +59,21 @@ public class MainActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
 
-
-        AsyncTask<Object,Object,Object>asyncTask = new AsyncTask() {
-            @Override
-            protected Object doInBackground(Object[] objects) {
-                OkHttpClient httpClient = new OkHttpClient();
-                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo auth = new PtcLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
-                PokemonGo pokemonGo = null;
-                try {
-                    pokemonGo = new PokemonGo(auth,httpClient);
-                } catch (LoginFailedException e) {
-                    e.printStackTrace();
-                } catch (RemoteServerException e) {
-                    e.printStackTrace();
-                }
-//                if (pokemonGo != null) {
-//                    Log.d("Profile Info: ", pokemonGo.getPlayerProfile().toString());
-//                }
-                return null;
-            }
-        };
-//        asyncTask.execute();
         mLastLocation = new Location("");
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);
         setupMenu();
         getPokemon();
+    }
+
+    private RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo getAuth(OkHttpClient httpClient){
+
+        String type = UserPreferences.getLoginType(this);
+        if(type.equalsIgnoreCase("ptc")){
+            return new PtcLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
+        }else {
+            return new GoogleLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
+        }
     }
 
     private void getPokemon(){
@@ -108,8 +97,8 @@ public class MainActivity extends AppCompatActivity
                         .writeTimeout(10, TimeUnit.SECONDS)
                         .readTimeout(30, TimeUnit.SECONDS)
                         .build();
-                String token = UserPreferences.getToken(MainActivity.this);
-                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo auth = new PtcLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
+
+                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo auth = getAuth(httpClient);
                 PokemonGo pokemonGo = null;
                 try {
                     pokemonGo = new PokemonGo(auth,httpClient);

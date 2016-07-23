@@ -3,70 +3,55 @@ package com.moonshine.pokemongonotifications;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
-import android.content.ClipData;
-import android.content.ClipboardManager;
-import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
-import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
-import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.app.LoaderManager.LoaderCallbacks;
 
-import android.content.CursorLoader;
-import android.content.Loader;
-import android.database.Cursor;
-import android.net.Uri;
 import android.os.AsyncTask;
 
 import android.os.Build;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.inputmethod.EditorInfo;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
-import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
-import com.moonshine.pokemongonotifications.auth.GoogleLoginExtension;
-import com.pokegoapi.auth.GoogleLogin;
+import com.moonshine.pokemongonotifications.network.GoogleManager;
+import com.moonshine.pokemongonotifications.network.GoogleService;
 import com.pokegoapi.auth.PtcLogin;
 import com.pokegoapi.exceptions.LoginFailedException;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import POGOProtos.Networking.Envelopes.RequestEnvelopeOuterClass;
 import okhttp3.OkHttpClient;
 
-import static android.Manifest.permission.READ_CONTACTS;
-
 /**
  * A login screen that offers login via email/password.
  */
-public class LoginActivity extends AppCompatActivity implements GoogleLoginExtension.GoogleLoginListener{
-
+public class LoginActivity extends AppCompatActivity {
+    static final String TAG = "LoginActivity";
+    private static final int REQUEST_USER_AUTH = 1;
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
     private UserLoginTask mAuthTask = null;
+    private String mDeviceCode;
 
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private GoogleManager mGoogleManager;
+    private GoogleManager.CallBack mCallbackGoogle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,6 +78,42 @@ public class LoginActivity extends AppCompatActivity implements GoogleLoginExten
             @Override
             public void onClick(View view) {
                 attemptLogin();
+            }
+        });
+
+        mGoogleManager = GoogleManager.getInstance();
+        mCallbackGoogle = new GoogleManager.CallBack() {
+            @Override
+            public void authSuccessful(String authToken) {
+                showProgress(false);
+                Log.d(TAG, "authSuccessful() called with: authToken = [" + authToken + "]");
+                UserPreferences.saveToken(LoginActivity.this, authToken);
+                UserPreferences.setLoginType(LoginActivity.this, "google");
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
+//                        MainActivity.start(LoginActivity.this, authToken, MainActivity.PROVIDER_GOOGLE);
+            }
+
+            @Override
+            public void authFailed(String message) {
+                showProgress(false);
+                Log.d(TAG, "authFailed() called with: message = [" + message + "]");
+                        Snackbar.make((View)mLoginFormView.getParent(), "Google Login Failed", Snackbar.LENGTH_LONG).show();
+            }
+
+            @Override
+            public void authRequested(GoogleService.AuthRequest body) {
+                GoogleAuthActivity.startForResult(LoginActivity.this, REQUEST_USER_AUTH,
+                        body.getVerificationUrl(), body.getUserCode());
+                mDeviceCode = body.getDeviceCode();
+            }
+        };
+
+        Button mGmailButton = (Button) findViewById(R.id.google_sign_in_button);
+        mGmailButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mGoogleManager.authUser(mCallbackGoogle);
             }
         });
 
@@ -201,31 +222,15 @@ public class LoginActivity extends AppCompatActivity implements GoogleLoginExten
     }
 
     @Override
-    public void openConsentUrl(final String url, final String codeToEnter) {
-        LoginActivity.this.runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                ClipboardManager clipboard = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
-                ClipData clip = ClipData.newPlainText("code", codeToEnter);
-                clipboard.setPrimaryClip(clip);
-                new AlertDialog.Builder(LoginActivity.this).setTitle("Account verification").setMessage("You need to consent the app to make use of your gmail account.\nTo do so, you need to enter the following code when asked for it: \n\n"+codeToEnter+"\n\nFor your convenience, the code is copied to your clipboard, so you can use paste when you need to enter it.\n\nMake sure you are entering the code with the correct Gmail account!!!").setNeutralButton("Ok!", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                        WebView webView = (WebView) findViewById(R.id.webView);
-                        webView.getSettings().setJavaScriptEnabled(true);
-                        webView.setWebViewClient(new WebViewClient());
-                        webView.setVisibility(View.VISIBLE);
-                        webView.loadUrl(url);
-                    }
-                }).show();
-
-
-
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if(resultCode == RESULT_OK){
+            if(requestCode == REQUEST_USER_AUTH){
+                showProgress(true);
+                mGoogleManager.requestToken(mDeviceCode, mCallbackGoogle);
             }
-        });
-
+        }
     }
+
 
     /**
      * Represents an asynchronous login/registration task used to authenticate
@@ -251,9 +256,9 @@ public class LoginActivity extends AppCompatActivity implements GoogleLoginExten
                     .build();
             try {
                 RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo info = new PtcLogin(httpClient).login(mEmail, mPassword);
-//                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo info = new GoogleLoginExtension(httpClient, LoginActivity.this).login(mEmail, mPassword);
                 UserPreferences.saveToken(LoginActivity.this, info.getToken().getContents());
                 UserPreferences.saveUsername(LoginActivity.this, mEmail);
+                UserPreferences.setLoginType(LoginActivity.this, "ptc");
             } catch (LoginFailedException e) {
                 return false;
             }
@@ -281,5 +286,8 @@ public class LoginActivity extends AppCompatActivity implements GoogleLoginExten
             showProgress(false);
         }
     }
+
+
 }
+
 

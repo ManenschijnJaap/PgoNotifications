@@ -10,9 +10,19 @@ public class UserPreferences {
     private static String preferenceName = "PGoNotiPrefs";
     private static String tokenKey = "UserToken";
     private static String usernameKey = "UserName";
+    private static String loginTypeKey = "LoginType";
 
     private static SharedPreferences getPreferences(Context context){
         return context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
+    }
+
+    public static void setLoginType(Context context, String loginType){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putString(loginTypeKey, loginType).commit();
+    }
+
+    public static String getLoginType(Context context){
+        return getPreferences(context).getString(loginTypeKey, null);
     }
 
     public static void clearPreferences(Context context){
