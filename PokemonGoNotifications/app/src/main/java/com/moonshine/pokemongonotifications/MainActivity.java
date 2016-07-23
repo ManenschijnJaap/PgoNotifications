@@ -1,12 +1,20 @@
 package com.moonshine.pokemongonotifications;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -23,6 +31,8 @@ import com.moonshine.pokemongonotifications.Utils.UserPreferences;
 import com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFragment;
 import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
 import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
+import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
+import com.moonshine.pokemongonotifications.services.ScanService;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
 import com.pokegoapi.auth.GoogleLogin;
@@ -30,6 +40,7 @@ import com.pokegoapi.auth.PtcLogin;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -43,6 +54,7 @@ public class MainActivity extends AppCompatActivity
 
     private static final float GRANULARITY = 0.0008f;
     private static final float SEARCH_RANGE = 0.005f;
+    private static final int LOCATION_REQUEST = 703;
 
     Location        mLastLocation;
 
@@ -64,90 +76,72 @@ public class MainActivity extends AppCompatActivity
         navigationView.setCheckedItem(R.id.nav_tracker);
 
         showFragment(TrackerFragment.newInstance());
+        setTitle("Track all pokemon");
         mLastLocation = new Location("");
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);
-        getPokemon();
+        checkPermissions();
+    }
+
+    private void checkPermissions(){
+        if (ContextCompat.checkSelfPermission(this,
+                android.Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+                // No explanation needed, we can request the permission.
+                ActivityCompat.requestPermissions(this,
+                        new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
+                        LOCATION_REQUEST);
+        }else{
+            periodicallyStartService();
+        }
+    }
+
+    private void periodicallyStartService(){
+        Intent intent = new Intent(MainActivity.this, PokemonReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTimeInMillis(System.currentTimeMillis());
+        long frequency= 2 * 60 * 1000; // in ms
+        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+    }
+
+    private void stopAlarm(){
+        Intent intent = new Intent(MainActivity.this, PokemonReceiver.class);
+        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+        AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
+
+        alarmManager.cancel(pendingIntent);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_REQUEST: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+
+                    // permission was granted, yay! Do the
+                    // contacts-related task you need to do.
+                    //TODO start the service
+                    periodicallyStartService();
+                } else {
+
+                    // permission denied, boo! Disable the
+                    // functionality that depends on this permission.
+                }
+                return;
+            }
+
+            // other 'case' lines to check for other
+            // permissions this app might request
+        }
     }
 
     private void showFragment(Fragment fragment){
         getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container, fragment).commitAllowingStateLoss();
-    }
-
-    private RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo getAuth(OkHttpClient httpClient){
-
-        String type = UserPreferences.getLoginType(this);
-        if(type.equalsIgnoreCase("ptc")){
-            return new PtcLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
-        }else {
-            return new GoogleLogin(httpClient).login(UserPreferences.getToken(MainActivity.this));
-        }
-    }
-
-    private void getPokemon(){
-        Log.d("getPokemon","trying to get catchable Pokemon");
-        AsyncTask<Object,Object,Object>asyncTask = new AsyncTask() {
-            @Override
-            protected Object doInBackground(Object[] objects) {
-                /*try {
-                    List<Point> spawnPoints = pokemonGo.getMap().getSpawnPoints();
-                    mMapWrapperFragment.setSpawnPoints(spawnPoints);
-                }catch(Exception e){
-                    Log.d("Error spawnPoints:",e.getMessage());
-                }*/
-
-                float lat=-SEARCH_RANGE;
-                float lon = -SEARCH_RANGE;
-                List<CatchablePokemon> pokeList=null;
-                Location loc = new Location(mLastLocation);
-                OkHttpClient httpClient = new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .writeTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS)
-                        .build();
-
-                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo auth = getAuth(httpClient);
-                PokemonGo pokemonGo = null;
-                try {
-                    pokemonGo = new PokemonGo(auth,httpClient);
-                } catch (LoginFailedException e) {
-                    e.printStackTrace();
-                    return null;
-                } catch (RemoteServerException e) {
-                    e.printStackTrace();
-                    return null;
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                    return null;
-                }
-                while(lat<SEARCH_RANGE) {
-                    loc.setLatitude(mLastLocation.getLatitude()+lat);
-                    while (lon < SEARCH_RANGE){
-                        loc.setLongitude(mLastLocation.getLongitude()+lon);
-                        pokemonGo.setLocation(loc.getLatitude(), loc.getLongitude(), loc.getAltitude());
-                        try {
-                            pokeList = pokemonGo.getMap().getCatchablePokemon();
-                            Thread.sleep(100);
-                        } catch (Exception e) {
-                            Log.d("Error pokeFetch:", e.getMessage());
-                        }
-
-                        if (pokeList != null) {
-                            for (CatchablePokemon pokemon : pokeList){
-                                Log.d("Catchable", "poke on lat " + loc.getLatitude() + " lon:" + loc.getLongitude()+" poke:"+pokemon.getPokemonId());
-                            }
-//                            Log.d("Catchable", "poke on lat " + loc.getLatitude() + " lon:" + loc.getLongitude()+" poke:"+pokeList.size());
-//                            mMapWrapperFragment.setPokemonMarkers(pokeList);
-                        }
-                        lon+=GRANULARITY;
-                    }
-                    lon=-SEARCH_RANGE;
-                    lat+=GRANULARITY;
-                }
-                return null;
-            }
-        };
-        asyncTask.execute();
     }
 
     @Override
@@ -184,13 +178,17 @@ public class MainActivity extends AppCompatActivity
         int id = item.getItemId();
 
         if (id == R.id.nav_tracker) {
+            setTitle("Track all pokemon");
             showFragment(TrackerFragment.newInstance());
         } else if (id == R.id.nav_tracker_rare) {
+            setTitle("Track wanted pokemon");
             showFragment(RareTrackerFragment.newInstance());
         } else if (id == R.id.nav_notifications) {
+            setTitle("Notifications");
             showFragment(NotificationPreferenceFragment.newInstance());
         } else if (id == R.id.nav_logout) {
             UserPreferences.clearPreferences(this);
+            stopAlarm();
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }

@@ -11,6 +11,7 @@ public class UserPreferences {
     private static String tokenKey = "UserToken";
     private static String usernameKey = "UserName";
     private static String loginTypeKey = "LoginType";
+    private static String notificationsKey = "POkeNotifications";
 
     private static SharedPreferences getPreferences(Context context){
         return context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
@@ -45,5 +46,14 @@ public class UserPreferences {
 
     public static String getUsername(Context context){
         return getPreferences(context).getString(usernameKey, "Uknown user");
+    }
+
+    public static void updateNotificationIds(Context context, String ids){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putString(notificationsKey, ids).commit();
+    }
+
+    public static String getNotificationIds(Context context) {
+        return getPreferences(context).getString(notificationsKey, "");
     }
 }

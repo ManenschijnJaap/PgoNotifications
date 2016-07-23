@@ -14,7 +14,14 @@
 
     <GridView
         android:layout_width="match_parent"
-        android:layout_height="match_parent"></GridView>
+        android:layout_height="match_parent"
+        android:id="@+id/pokeGrid"
+        android:numColumns="auto_fit"
+        android:columnWidth="110dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+        android:verticalSpacing="2dp"
+        ></GridView>
 
 
 </LinearLayout>
