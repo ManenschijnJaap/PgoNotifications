@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
@@ -30,6 +31,7 @@ import android.widget.TextView;
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
 import com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFragment;
 import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
+import com.moonshine.pokemongonotifications.fragments.SettingsFragment;
 import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
 import com.moonshine.pokemongonotifications.model.DbPokemon;
 import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
@@ -53,11 +55,6 @@ import okhttp3.OkHttpClient;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
-
-    PokemonGo go = null;
-
-    private static final float GRANULARITY = 0.0008f;
-    private static final float SEARCH_RANGE = 0.005f;
     private static final int LOCATION_REQUEST = 703;
 
     Location        mLastLocation;
@@ -90,6 +87,46 @@ public class MainActivity extends AppCompatActivity
         }
     }
 
+    BroadcastReceiver intervalChangeReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            stopAlarm();
+            stopServices();
+            if(UserPreferences.isScanEnabled(MainActivity.this)) {
+                periodicallyRefreshToken();
+                periodicallyStartService();
+            }
+        }
+    };
+
+    BroadcastReceiver startStopReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (UserPreferences.isScanEnabled(MainActivity.this)){
+                //enabled scan
+                periodicallyRefreshToken();
+                periodicallyStartService();
+            }else{
+                stopAlarm();
+                stopServices();
+            }
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        registerReceiver(intervalChangeReceiver, new IntentFilter("com.moonshine.intervalChanged"));
+        registerReceiver(startStopReceiver, new IntentFilter("com.moonshine.startStopChanged"));
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        unregisterReceiver(intervalChangeReceiver);
+        unregisterReceiver(startStopReceiver);
+    }
+
     private void periodicallyRefreshToken(){
         Intent intent = new Intent(MainActivity.this, TokenRefreshReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
@@ -109,7 +146,9 @@ public class MainActivity extends AppCompatActivity
                         new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION},
                         LOCATION_REQUEST);
         }else{
-            periodicallyStartService();
+            if(UserPreferences.isScanEnabled(this)) {
+                periodicallyStartService();
+            }
         }
     }
 
@@ -119,8 +158,10 @@ public class MainActivity extends AppCompatActivity
         AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
         Calendar calendar = Calendar.getInstance();
         calendar.setTimeInMillis(System.currentTimeMillis());
-        long frequency= 5 * 60 * 1000; // in ms
+
+        long frequency= UserPreferences.getInterval(this) * 60 * 1000; // in ms
         alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        startService(new Intent(this, ScanService.class));
     }
 
     private void stopAlarm(){
@@ -129,7 +170,7 @@ public class MainActivity extends AppCompatActivity
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
         Intent intent2 = new Intent(MainActivity.this, TokenRefreshReceiver.class);
-        PendingIntent pendingIntent2 = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+        PendingIntent pendingIntent2 = PendingIntent.getBroadcast(MainActivity.this, 0, intent2, 0);
 
         alarmManager.cancel(pendingIntent);
         alarmManager.cancel(pendingIntent2);
@@ -151,8 +192,9 @@ public class MainActivity extends AppCompatActivity
 
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
-                    //TODO start the service
-                    periodicallyStartService();
+                    if(UserPreferences.isScanEnabled(this)) {
+                        periodicallyStartService();
+                    }
                 } else {
 
                     // permission denied, boo! Disable the
@@ -224,6 +266,9 @@ public class MainActivity extends AppCompatActivity
             }
             startActivity(new Intent(this, LoginActivity.class));
             finish();
+        } else if (id == R.id.nav_settings) {
+            setTitle("Settings");
+            showFragment(SettingsFragment.newInstance());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

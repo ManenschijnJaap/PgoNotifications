@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -263,12 +264,14 @@ public class ScanService extends Service {
         for(DbPokemon pkmn : storedPokemons){
             if (!pkmn.isHasShownNotification() && selectedPokemon.contains(Long.parseLong(pkmn.getPokemonId()+""))){
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
-
+                Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.pokemon_recovery);
                 Notification notification = builder.setContentTitle("Pokemon Notification")
                         .setContentText("Found "+ pkmn.getPokemonName() +" in your area!")
                         .setTicker("New Message Alert!")
                         .setVibrate(new long[] { 0, 200, 150, 200, 150, 400 })
+                        .setSound(soundUri)
                         .setSmallIcon(R.mipmap.ic_launcher).build();
+
 
                 NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
                 notificationManager.notify(pkmn.getPokemonId(), notification);

@@ -30,7 +30,7 @@ public class TrackerFragment extends Fragment {
 
     private GridView mGrid;
     private Handler mHandler;
-    private int mInterval = 20000;
+    private int mInterval = 5000;
 
     public TrackerFragment() {
         // Required empty public constructor
@@ -126,9 +126,6 @@ public class TrackerFragment extends Fragment {
             return;
         }
         final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        for (DbPokemon pkmn : trackedPkmn){
-            Log.e("Tracker", "Found "+pkmn.getPokemonName()+ " within " + pkmn.getLocation().distanceTo(lastKnownLocation) + "m!");
-        }
         mGrid.setAdapter(new TrackerAdapter(getContext(), trackedPkmn, lastKnownLocation));
     }
 

@@ -1,0 +1,54 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:fillViewport="true"
+    android:layout_height="match_parent">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    tools:context="com.moonshine.pokemongonotifications.fragments.SettingsFragment">
+
+    <!-- TODO: Update blank fragment layout -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:layout_margin="10dp"
+        android:text="You can alter some settings here. At this moment, the app uses quite some mobile data because it scans for Pokemon every few minutes.\n\nTo reduce the data usage, drag the slider to the right and click save. This means the app will scan for Pokemon less often.\nIf you want regular scans, drag the slider to the left and hit save.\n\nIt is strongly adviced to be on a WiFi network to scan often!" />
+
+    <android.support.v7.widget.AppCompatSeekBar
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_margin="10dp"
+        android:id="@+id/seekBar"
+        android:max="8"/>
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="Refresh every: 5 minutes"
+        android:id="@+id/minutes"/>
+
+    <Button
+        android:layout_margin="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/save"
+        android:text="Save settings"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        android:text="If you want, you can also entirely stop the automatic scan by clicking the button below. \nPlease do note you have to activate the scan again by clicking the button again!!"/>
+
+    <Button
+        android:layout_margin="10dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/scanToggle"
+        android:text="Stop automatic scan"/>
+</LinearLayout>
+</ScrollView>

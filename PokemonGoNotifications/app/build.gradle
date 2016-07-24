@@ -11,6 +11,7 @@ android {
         targetSdkVersion 23
         versionCode 1
         versionName "1.0"
+        multiDexEnabled true
     }
     buildTypes {
         release {
@@ -27,6 +28,12 @@ dependencies {
     testCompile 'junit:junit:4.12'
     // compile 'com.github.Grover-c13:PokeGOAPI-Java:master-SNAPSHOT'
     compile 'com.android.support:design:23.4.0'
+
+    apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
+    // use kapt for kotlin apt
+    compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
+    compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
+
     compile 'com.android.support:design:23.4.0'
     compile 'com.android.support:appcompat-v7:23.4.0'
     compile 'com.android.support:support-v4:23.4.0'
@@ -36,10 +43,5 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.0.0'
     compile 'com.squareup.okhttp:logging-interceptor:2.6.0'
     compile 'com.github.Grover-c13:PokeGOAPI-Java:2e14fab7f0'
-
-    apt "com.github.Raizlabs.DBFlow:dbflow-processor:${dbflow_version}"
-    // use kapt for kotlin apt
-    compile "com.github.Raizlabs.DBFlow:dbflow-core:${dbflow_version}"
-    compile "com.github.Raizlabs.DBFlow:dbflow:${dbflow_version}"
-
+    compile 'com.android.support:multidex:1.0.0'
 }

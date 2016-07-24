@@ -13,6 +13,8 @@ public class UserPreferences {
     private static String loginTypeKey = "LoginType";
     private static String notificationsKey = "POkeNotifications";
     private static String refreshTokenKey = "refreshToken";
+    private static String intervalKey = "intervalKey";
+    private static String scanEnabledKey = "scanEnabledKey";
 
     private static SharedPreferences getPreferences(Context context){
         return context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
@@ -65,5 +67,23 @@ public class UserPreferences {
 
     public static String getRefreshToken(Context context){
         return getPreferences(context).getString(refreshTokenKey, null);
+    }
+
+    public static void saveInterval(Context context, int value){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putInt(intervalKey, value).commit();
+    }
+
+    public static int getInterval(Context context){
+        return getPreferences(context).getInt(intervalKey, 5);
+    }
+
+    public static void changeScanEnabled(Context context, boolean scanEnabled){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putBoolean(scanEnabledKey, scanEnabled).commit();
+    }
+
+    public static boolean isScanEnabled(Context context){
+        return getPreferences(context).getBoolean(scanEnabledKey, true);
     }
 }
