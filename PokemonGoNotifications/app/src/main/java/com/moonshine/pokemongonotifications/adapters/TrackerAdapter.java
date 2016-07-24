@@ -71,9 +71,9 @@ public class TrackerAdapter extends BaseAdapter {
         }
         arrow.setImageDrawable(PokemonUtils.getRotateDrawable(mContext.getResources().getDrawable(R.drawable.direction), bearing));
 
-        if(distance < 25){
+        if(distance < 50){
             iv.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.green_bg));
-        }else if(distance < 75){
+        }else if(distance < 150){
 
             iv.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.orange_bg));
         }else{
