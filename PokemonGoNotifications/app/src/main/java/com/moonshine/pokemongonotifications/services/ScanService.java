@@ -236,7 +236,7 @@ public class ScanService extends Service {
             if (pkm.getExpirationTimestampMs() > 0) {
                 boolean exists = false;
                 for (DbPokemon dbPkmn : storedPokemons) {
-                    if (dbPkmn.getSpawnPointId().equalsIgnoreCase(pkm.getSpawnPointId())) {
+                    if (dbPkmn.getSpawnPointId().equalsIgnoreCase(pkm.getSpawnPointId()) && dbPkmn.getEncounterId() == pkm.getEncounterId() && dbPkmn.getPokemonId() == pkm.getPokemonId().getNumber()) {
                         exists = true;
                     }
                 }
@@ -265,8 +265,9 @@ public class ScanService extends Service {
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
 
                 Notification notification = builder.setContentTitle("Pokemon Notification")
-                        .setContentText("Found a "+ pkmn.getPokemonName() +" in your area!")
+                        .setContentText("Found "+ pkmn.getPokemonName() +" in your area!")
                         .setTicker("New Message Alert!")
+                        .setVibrate(new long[] { 0, 200, 150, 200, 150, 400 })
                         .setSmallIcon(R.mipmap.ic_launcher).build();
 
                 NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);

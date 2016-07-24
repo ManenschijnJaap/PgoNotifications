@@ -13,6 +13,9 @@ import android.support.v4.app.ActivityCompat;
 import android.util.TypedValue;
 
 import com.moonshine.pokemongonotifications.model.DbPokemon;
+import com.moonshine.pokemongonotifications.model.DbPokemon_Table;
+import com.raizlabs.android.dbflow.sql.language.Condition;
+import com.raizlabs.android.dbflow.sql.language.NameAlias;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.lang.reflect.Field;
@@ -75,6 +78,7 @@ public class PokemonUtils {
     public static List<DbPokemon> getNearbyPokemon(Context context, int amount, boolean filtered) {
         List<DbPokemon> storedPokemons = SQLite.select()
                 .from(DbPokemon.class)
+                .where(DbPokemon_Table.ignored.eq(false))
                 .queryList();
 
         //Let's clear the list first of any pokemon that have expired
@@ -91,12 +95,17 @@ public class PokemonUtils {
             List<Long> selectedPokemon = PokemonUtils.convertStringToList(UserPreferences.getNotificationIds(context));
             wantedPokemons = new ArrayList<>();
             for (DbPokemon pkmn : storedPokemons) {
-                if (selectedPokemon.contains(Long.parseLong(pkmn.getPokemonId() + ""))) {
+                if (!pkmn.isIgnored() && selectedPokemon.contains(Long.parseLong(pkmn.getPokemonId() + ""))) {
                     wantedPokemons.add(pkmn);
                 }
             }
         } else {
-            wantedPokemons = storedPokemons;
+            wantedPokemons = new ArrayList<>();
+            for (DbPokemon pkmn : storedPokemons) {
+                if (!pkmn.isIgnored()) {
+                        wantedPokemons.add(pkmn);
+                }
+            }
         }
         LocationManager manager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -107,12 +116,21 @@ public class PokemonUtils {
             //                                          int[] grantResults)
             // to handle the case where the user grants the permission. See the documentation
             // for ActivityCompat#requestPermissions for more details.
+            if(wantedPokemons.size() <= amount){
+                return wantedPokemons;
+            }
             return new ArrayList<DbPokemon>(wantedPokemons.subList(0, amount - 1));
         }
         final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
         Collections.sort(wantedPokemons, new Comparator<DbPokemon>() {
             @Override
             public int compare(DbPokemon lhs, DbPokemon rhs) {
+                if (lhs.getLocation() == null && rhs.getLocation() != null){
+                    return 1;
+                }
+                if (lhs.getLocation() != null && rhs.getLocation() == null){
+                    return -1;
+                }
                 if (lhs.getLocation().distanceTo(lastKnownLocation) < rhs.getLocation().distanceTo(lastKnownLocation)){
                     return -1;
                 }else if(lhs.getLocation().distanceTo(lastKnownLocation) > rhs.getLocation().distanceTo(lastKnownLocation)){

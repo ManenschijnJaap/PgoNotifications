@@ -3,6 +3,7 @@
     android:orientation="vertical" android:layout_width="100dp"
     android:layout_height="100dp">
     <ImageView
+        android:layout_margin="10dp"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:id="@+id/pokemonImage"
@@ -12,7 +13,7 @@
         android:layout_width="20dp"
         android:layout_height="20dp"
         android:id="@+id/compass"
-        android:layout_margin="5dp"
+        android:layout_margin="20dp"
         android:layout_alignParentRight="true"/>
 
 </RelativeLayout>

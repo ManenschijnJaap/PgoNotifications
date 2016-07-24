@@ -2,6 +2,7 @@ package com.moonshine.pokemongonotifications.fragments;
 
 import android.Manifest;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationManager;
@@ -10,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -96,7 +98,16 @@ public class RareTrackerFragment extends Fragment {
         mGrid.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                //TODO set ignore flag on the pokemon and reset the adapter!
+                final DbPokemon pkmn = (DbPokemon) mGrid.getAdapter().getItem(position);
+                new AlertDialog.Builder(getContext()).setTitle("Alert").setMessage("Are you sure you want to ignore this "+pkmn.getPokemonName()+"?\nBy doing so, this pokemon won't show up in your tracker anymore!").setNegativeButton("Cancel", null).setPositiveButton("Ignore", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        pkmn.setIgnored(true);
+                        pkmn.save();
+                        stopUpdates();
+                        startUpdates();
+                    }
+                }).show();
                 return false;
             }
         });

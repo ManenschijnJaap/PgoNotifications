@@ -17,9 +17,11 @@ public class DbPokemon extends BaseModel {
     @PrimaryKey
     private String spawnPointId;
 
+    @PrimaryKey
     @Column
     private long encounterId;
 
+    @PrimaryKey
     @Column
     private int pokemonId;
 
@@ -37,6 +39,17 @@ public class DbPokemon extends BaseModel {
 
     @Column
     private double longitude;
+
+    @Column
+    private boolean ignored;
+
+    public boolean isIgnored() {
+        return ignored;
+    }
+
+    public void setIgnored(boolean ignored) {
+        this.ignored = ignored;
+    }
 
     public String getSpawnPointId() {
         return spawnPointId;

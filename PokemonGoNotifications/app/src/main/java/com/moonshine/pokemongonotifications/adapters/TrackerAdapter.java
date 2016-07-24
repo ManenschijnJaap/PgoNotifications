@@ -64,50 +64,22 @@ public class TrackerAdapter extends BaseAdapter {
     private void configureIndicators(View view, Location ownLocation, Location targetLocation){
         float distance = ownLocation.distanceTo(targetLocation);
         float bearing = ownLocation.bearingTo(targetLocation);
-        BearingDirection direction = PokemonUtils.getBearingDirection(bearing);
+        ImageView iv = (ImageView) view.findViewById(R.id.pokemonImage);
+        ImageView arrow = (ImageView) view.findViewById(R.id.compass);
+        if(bearing < 0){
+            bearing = bearing + 360;
+        }
+        arrow.setImageDrawable(PokemonUtils.getRotateDrawable(mContext.getResources().getDrawable(R.drawable.direction), bearing));
 
         if(distance < 25){
-
-            view.setBackgroundDrawable(new ColorDrawable(Color.GREEN));
+            iv.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.green_bg));
         }else if(distance < 75){
 
-            view.setBackgroundDrawable(new ColorDrawable(Color.YELLOW));
+            iv.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.orange_bg));
         }else{
 
-            view.setBackgroundDrawable(new ColorDrawable(Color.RED));
+            iv.setBackgroundDrawable(mContext.getResources().getDrawable(R.drawable.red_bg));
         }
-        switch (direction){
-            case NORTH:
 
-
-            break;
-            case NORTHEAST:
-
-
-            break;
-            case EAST:
-
-
-            break;
-            case SOUTHEAST:
-
-
-            break;
-            case SOUTH:
-
-
-            break;
-            case SOUTHWEST:
-
-
-            break;
-            case WEST:
-
-
-            break;
-            case NORTHWEST:
-
-                break;
-        }
     }
 }
