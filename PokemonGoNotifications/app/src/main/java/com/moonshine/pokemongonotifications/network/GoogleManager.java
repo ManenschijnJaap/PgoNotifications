@@ -84,7 +84,11 @@ public class GoogleManager {
         Callback<GoogleService.TokenResponse> googleCallback = new Callback<GoogleService.TokenResponse>() {
             @Override
             public void onResponse(Call<GoogleService.TokenResponse> call, Response<GoogleService.TokenResponse> response) {
-                callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
+                if(response != null && response.body() != null && response.body().getIdToken() != null) {
+                    callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
+                }else{
+                    callBack.authFailed("Failed on requesting the id token");
+                }
             }
 
             @Override
@@ -108,7 +112,11 @@ public class GoogleManager {
         Callback<GoogleService.TokenResponse> googleCallback = new Callback<GoogleService.TokenResponse>() {
             @Override
             public void onResponse(Call<GoogleService.TokenResponse> call, Response<GoogleService.TokenResponse> response) {
-                callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
+                if(response != null && response.body() != null && response.body().getIdToken() != null) {
+                    callBack.authSuccessful(response.body().getIdToken(), response.body().getRefreshToken());
+                }else{
+                    callBack.authFailed("Failed on requesting the id token");
+                }
             }
 
             @Override

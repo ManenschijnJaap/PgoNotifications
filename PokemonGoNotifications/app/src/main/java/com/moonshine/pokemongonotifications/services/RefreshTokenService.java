@@ -32,6 +32,7 @@ public class RefreshTokenService extends Service {
     private GoogleManager mGoogleManager;
     private GoogleManager.CallBack mCallbackGoogle;
     private static String TAG = "RefreshTokenService";
+    private AsyncTask<Void, Void, Void> refresher;
 
     @Nullable
     @Override
@@ -80,8 +81,16 @@ public class RefreshTokenService extends Service {
         return super.onStartCommand(intent, flags, startId);
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(refresher != null) {
+            refresher.cancel(true);
+        }
+    }
+
     private void refreshToken(){
-        new AsyncTask<Void, Void, Void>(){
+        refresher = new AsyncTask<Void, Void, Void>(){
 
             @Override
             protected Void doInBackground(Void... params) {
@@ -90,6 +99,7 @@ public class RefreshTokenService extends Service {
                 return null;
             }
 
-        }.execute();
+        };
+        refresher.execute();
     }
 }

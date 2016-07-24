@@ -51,6 +51,7 @@ public class ScanService extends Service {
 
     private Location mLastLocation;
     private LocationListener mListener;
+    private AsyncTask<Void, Void, Void> scanner;
 
     public ScanService() {
         super();
@@ -94,22 +95,24 @@ public class ScanService extends Service {
         };
         try {
             mLocationManager.requestLocationUpdates(
-                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
                     mListener);
-        } catch (java.lang.SecurityException ex) {
+        } catch (java.lang.SecurityException e) {
 //            Log.i(TAG, "fail to request location update, ignore", ex);
-        } catch (IllegalArgumentException ex) {
-//            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
+        } catch (IllegalArgumentException ee) {
+//            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
             try {
                 mLocationManager.requestLocationUpdates(
-                        LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                        LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
                         mListener);
-            } catch (java.lang.SecurityException e) {
+            } catch (java.lang.SecurityException ex) {
 //            Log.i(TAG, "fail to request location update, ignore", ex);
-            } catch (IllegalArgumentException ee) {
-//            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
+            } catch (IllegalArgumentException ex) {
+//            Log.d(TAG, "network provider does not exist, " + ex.getMessage());
+
             }
         }
+
 
 
 
@@ -133,9 +136,16 @@ public class ScanService extends Service {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        if(scanner != null) {
+            scanner.cancel(true);
+        }
+    }
 
     private void getPokemon(){
-        new AsyncTask<Void, Void, Void>(){
+        scanner = new AsyncTask<Void, Void, Void>(){
 
             @Override
             protected Void doInBackground(Void... params) {
@@ -197,7 +207,8 @@ public class ScanService extends Service {
                 super.onPostExecute(aVoid);
                 ScanService.this.stopSelf();
             }
-        }.execute();
+        };
+        scanner.execute();
 
 
 
@@ -232,7 +243,7 @@ public class ScanService extends Service {
                 if (!exists) {
                     DbPokemon dbPkmn = new DbPokemon();
                     dbPkmn.setEncounterId(pkm.getEncounterId());
-                    dbPkmn.setExpirationTimestamp(System.currentTimeMillis() + pkm.getExpirationTimestampMs());
+                    dbPkmn.setExpirationTimestamp(pkm.getExpirationTimestampMs());
                     dbPkmn.setLatitude(pkm.getLatitude());
                     dbPkmn.setLongitude(pkm.getLongitude());
                     dbPkmn.setPokemonId(pkm.getPokemonId().getNumber());

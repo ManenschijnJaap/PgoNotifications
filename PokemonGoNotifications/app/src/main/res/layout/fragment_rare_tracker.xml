@@ -1,10 +1,26 @@
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#ff0000"
+    android:orientation="vertical"
     tools:context="com.moonshine.pokemongonotifications.fragments.RareTrackerFragment">
 
+    <TextView
+        android:layout_margin="20dp"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="This tracker shows the 10 nearest pokemon you want notifications for and refreshes every 10 seconds. Want to ignore a pokemon? Long click on it to get the option to ignore it.\n\nDistance and direction indication is shown for each pokemon!"/>
 
+    <GridView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/pokeGrid"
+        android:numColumns="auto_fit"
+        android:columnWidth="110dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+        android:verticalSpacing="2dp"
+        ></GridView>
 
-</FrameLayout>
+</LinearLayout>

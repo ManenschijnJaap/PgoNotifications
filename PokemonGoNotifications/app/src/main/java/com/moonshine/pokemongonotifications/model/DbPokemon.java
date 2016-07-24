@@ -1,5 +1,7 @@
 package com.moonshine.pokemongonotifications.model;
 
+import android.location.Location;
+
 import com.moonshine.pokemongonotifications.database.AppDatabase;
 import com.raizlabs.android.dbflow.annotation.Column;
 import com.raizlabs.android.dbflow.annotation.PrimaryKey;
@@ -98,5 +100,12 @@ public class DbPokemon extends BaseModel {
 
     public void setHasShownNotification(boolean hasShownNotification) {
         this.hasShownNotification = hasShownNotification;
+    }
+
+    public Location getLocation(){
+        Location loc = new Location("");
+        loc.setLatitude(getLatitude());
+        loc.setLongitude(getLongitude());
+        return loc;
     }
 }

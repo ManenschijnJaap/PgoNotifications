@@ -31,8 +31,10 @@ import com.moonshine.pokemongonotifications.Utils.UserPreferences;
 import com.moonshine.pokemongonotifications.fragments.NotificationPreferenceFragment;
 import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
 import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
+import com.moonshine.pokemongonotifications.model.DbPokemon;
 import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
 import com.moonshine.pokemongonotifications.receivers.TokenRefreshReceiver;
+import com.moonshine.pokemongonotifications.services.RefreshTokenService;
 import com.moonshine.pokemongonotifications.services.ScanService;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
@@ -40,6 +42,7 @@ import com.pokegoapi.auth.GoogleLogin;
 import com.pokegoapi.auth.PtcLogin;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
+import com.raizlabs.android.dbflow.sql.language.SQLite;
 
 import java.util.Calendar;
 import java.util.List;
@@ -125,7 +128,16 @@ public class MainActivity extends AppCompatActivity
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
         AlarmManager alarmManager = (AlarmManager) getSystemService(ALARM_SERVICE);
 
+        Intent intent2 = new Intent(MainActivity.this, TokenRefreshReceiver.class);
+        PendingIntent pendingIntent2 = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+
         alarmManager.cancel(pendingIntent);
+        alarmManager.cancel(pendingIntent2);
+    }
+
+    private void stopServices(){
+        stopService(new Intent(this, RefreshTokenService.class));
+        stopService(new Intent(this, ScanService.class));
     }
 
     @Override
@@ -203,6 +215,13 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_logout) {
             UserPreferences.clearPreferences(this);
             stopAlarm();
+            stopServices();
+            List<DbPokemon> storedPokemons = SQLite.select()
+                    .from(DbPokemon.class)
+                    .queryList();
+            for(DbPokemon pkmn : storedPokemons){
+                pkmn.delete();
+            }
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
