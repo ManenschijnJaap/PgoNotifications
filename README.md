@@ -2,6 +2,7 @@
 A simple pgo scanner that gives local notifications
 
 #Todo
+- Move to HockeyApp for releases
 - App crashes when there is no lastKnownLocation
 - Should use location from NETWORK_PROVIDER over GPS_PROVIDER
 - Reduce data usage
