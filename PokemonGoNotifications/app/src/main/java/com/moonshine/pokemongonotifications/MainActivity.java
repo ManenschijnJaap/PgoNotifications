@@ -75,8 +75,9 @@ public class MainActivity extends AppCompatActivity
         navigationView.setCheckedItem(R.id.nav_tracker);
 
         showFragment(TrackerFragment.newInstance());
-        onNewIntent(getIntent());
         setTitle("Track all pokemon");
+        onNewIntent(getIntent());
+
         mLastLocation = new Location("");
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);

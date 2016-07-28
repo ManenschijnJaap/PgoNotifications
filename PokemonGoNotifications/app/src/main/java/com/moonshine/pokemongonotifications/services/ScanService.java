@@ -268,6 +268,7 @@ public class ScanService extends Service {
                         .setTicker("New Message Alert!")
                         .setVibrate(new long[] { 0, 200, 150, 200, 150, 400 })
                         .setSound(soundUri)
+                        .setAutoCancel(true)
                         .setSmallIcon(R.mipmap.ic_launcher).build();
 
 
