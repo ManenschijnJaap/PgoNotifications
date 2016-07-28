@@ -75,6 +75,7 @@ public class MainActivity extends AppCompatActivity
         navigationView.setCheckedItem(R.id.nav_tracker);
 
         showFragment(TrackerFragment.newInstance());
+        onNewIntent(getIntent());
         setTitle("Track all pokemon");
         mLastLocation = new Location("");
         mLastLocation.setLatitude(52.5196119d);//your coords of course
@@ -82,6 +83,17 @@ public class MainActivity extends AppCompatActivity
         checkPermissions();
         if (UserPreferences.getLoginType(this).equalsIgnoreCase("google")){
             periodicallyRefreshToken();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        if(intent.hasExtra("openRare")){
+            showFragment(RareTrackerFragment.newInstance());
+            setTitle("Track wanted pokemon");
+            NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
+            navigationView.setCheckedItem(R.id.nav_tracker_rare);
         }
     }
 

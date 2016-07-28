@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.IntentService;
 import android.app.Notification;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -21,6 +22,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
+import com.moonshine.pokemongonotifications.MainActivity;
 import com.moonshine.pokemongonotifications.R;
 import com.moonshine.pokemongonotifications.Utils.PokemonUtils;
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
@@ -255,8 +257,13 @@ public class ScanService extends Service {
         for(DbPokemon pkmn : storedPokemons){
             if (!pkmn.isHasShownNotification() && selectedPokemon.contains(Long.parseLong(pkmn.getPokemonId()+""))){
                 NotificationCompat.Builder builder = new NotificationCompat.Builder(getApplicationContext());
+                Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+                intent.putExtra("openRare", true);
+                PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
+                        intent, 0);
                 Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.pokemon_recovery);
                 Notification notification = builder.setContentTitle("Pokemon Notification")
+                        .setContentIntent(pendingIntent)
                         .setContentText("Found "+ pkmn.getPokemonName() +" in your area!")
                         .setTicker("New Message Alert!")
                         .setVibrate(new long[] { 0, 200, 150, 200, 150, 400 })
