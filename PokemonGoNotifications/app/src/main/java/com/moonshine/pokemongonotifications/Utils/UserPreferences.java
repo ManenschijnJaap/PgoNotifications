@@ -10,11 +10,13 @@ public class UserPreferences {
     private static String preferenceName = "PGoNotiPrefs";
     private static String tokenKey = "UserToken";
     private static String usernameKey = "UserName";
+    private static String passwordKey = "pwKey";
     private static String loginTypeKey = "LoginType";
     private static String notificationsKey = "POkeNotifications";
     private static String refreshTokenKey = "refreshToken";
     private static String intervalKey = "intervalKey";
     private static String scanEnabledKey = "scanEnabledKey";
+    private static String uniqueIdKey = "uniqueIdKey";
 
     private static SharedPreferences getPreferences(Context context){
         return context.getSharedPreferences(preferenceName, Context.MODE_PRIVATE);
@@ -85,5 +87,23 @@ public class UserPreferences {
 
     public static boolean isScanEnabled(Context context){
         return getPreferences(context).getBoolean(scanEnabledKey, true);
+    }
+
+    public static void setUniqueId(Context context, String id){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putString(uniqueIdKey, id).commit();
+    }
+
+    public static String getUniqueId(Context context){
+        return getPreferences(context).getString(uniqueIdKey, null);
+    }
+
+    public static void setPassword(Context context, String password){
+        SharedPreferences prefs = getPreferences(context);
+        prefs.edit().putString(passwordKey, password).commit();
+    }
+
+    public static String getPassword(Context context){
+        return getPreferences(context).getString(passwordKey, null);
     }
 }

@@ -24,19 +24,23 @@ import com.moonshine.pokemongonotifications.R;
 import com.moonshine.pokemongonotifications.Utils.PokemonUtils;
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
 import com.moonshine.pokemongonotifications.model.DbPokemon;
+import com.moonshine.pokemongonotifications.model.ResponsePokemon;
+import com.moonshine.pokemongonotifications.network.PokemonResponse;
+import com.moonshine.pokemongonotifications.network.RestClient;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
-import com.pokegoapi.auth.GoogleLogin;
-import com.pokegoapi.auth.PtcLogin;
+
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import POGOProtos.Networking.Envelopes.RequestEnvelopeOuterClass;
 import okhttp3.OkHttpClient;
+import retrofit2.Response;
 
 /**
  * Created by jaapmanenschijn on 23/07/16.
@@ -53,6 +57,7 @@ public class ScanService extends Service {
     private Location mLastLocation;
     private LocationListener mListener;
     private AsyncTask<Void, Void, Void> scanner;
+    private boolean fetchingPokemon = true;
 
     public ScanService() {
         super();
@@ -96,7 +101,7 @@ public class ScanService extends Service {
         };
         try {
             mLocationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                    LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
                     mListener);
         } catch (java.lang.SecurityException e) {
 //            Log.i(TAG, "fail to request location update, ignore", ex);
@@ -104,7 +109,7 @@ public class ScanService extends Service {
 //            Log.d(TAG, "gps provider does not exist " + ex.getMessage());
             try {
                 mLocationManager.requestLocationUpdates(
-                        LocationManager.NETWORK_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
+                        LocationManager.GPS_PROVIDER, LOCATION_INTERVAL, LOCATION_DISTANCE,
                         mListener);
             } catch (java.lang.SecurityException ex) {
 //            Log.i(TAG, "fail to request location update, ignore", ex);
@@ -127,15 +132,7 @@ public class ScanService extends Service {
         return null;
     }
 
-    private RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo getAuth(OkHttpClient httpClient) {
 
-        String type = UserPreferences.getLoginType(this);
-        if (type.equalsIgnoreCase("ptc")) {
-            return new PtcLogin(httpClient).login(UserPreferences.getToken(getApplicationContext()));
-        } else {
-            return new GoogleLogin(httpClient).login(UserPreferences.getToken(getApplicationContext()));
-        }
-    }
 
     @Override
     public void onDestroy() {
@@ -150,55 +147,41 @@ public class ScanService extends Service {
 
             @Override
             protected Void doInBackground(Void... params) {
-                float lat=-SEARCH_RANGE;
-                float lon = -SEARCH_RANGE;
-                List<CatchablePokemon> pokeList=null;
+
                 Location loc = new Location(mLastLocation);
-                OkHttpClient httpClient = new OkHttpClient.Builder()
-                        .connectTimeout(10, TimeUnit.SECONDS)
-                        .writeTimeout(10, TimeUnit.SECONDS)
-                        .readTimeout(30, TimeUnit.SECONDS)
-                        .build();
 
-                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo auth = getAuth(httpClient);
-                PokemonGo pokemonGo = null;
+                //TODO massive error handling!
                 try {
-                    pokemonGo = new PokemonGo(auth,httpClient);
-                } catch (LoginFailedException e) {
-                    e.printStackTrace();
-                    return null;
-                } catch (RemoteServerException e) {
-                    e.printStackTrace();
-                    return null;
-                } catch (NullPointerException e) {
-                    e.printStackTrace();
-                    return null;
-                }
-                while(lat<SEARCH_RANGE) {
-                    loc.setLatitude(mLastLocation.getLatitude()+lat);
-                    while (lon < SEARCH_RANGE){
-                        loc.setLongitude(mLastLocation.getLongitude()+lon);
-                        pokemonGo.setLocation(loc.getLatitude(), loc.getLongitude(), loc.getAltitude());
-                        try {
-                            pokeList = pokemonGo.getMap().getCatchablePokemon();
-                            Thread.sleep(100);
-                        } catch (Exception e) {
-                            Log.d("Error pokeFetch:", e.getMessage());
-                        }
-
-                        if (pokeList != null) {
-                            for (CatchablePokemon pokemon : pokeList){
-                                Log.d("Catchable", "poke on lat " + loc.getLatitude() + " lon:" + loc.getLongitude()+" poke:"+pokemon.getPokemonId() + "expiry: "+pokemon.getExpirationTimestampMs());
+                    Response<Void> response = RestClient.getInstance().startFetchingPokemon(loc, getApplicationContext()).execute();
+                    if (response != null && response.isSuccessful()){
+                        while(fetchingPokemon){
+                            Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
+                            if(pkmnResponse != null && pkmnResponse.isSuccessful()){
+                                if(pkmnResponse.body() != null){
+                                    if(pkmnResponse.body().getPokemon() != null) {
+                                        importPokemon(pkmnResponse.body().getPokemon());
+                                    }
+                                    fetchingPokemon = pkmnResponse.body().isFindingPokemon();
+                                    if(fetchingPokemon){
+                                        Thread.sleep(10000);
+                                    }else{
+                                        Log.e("TAG", "Yay, the check works!");
+                                    }
+                                }
+                            }else{
+                                Log.e("SCANSERVICE", "Error getting pokemon: "+pkmnResponse.errorBody().string());
                             }
-                            importPokemon(pokeList);
-//                            Log.d("Catchable", "poke on lat " + loc.getLatitude() + " lon:" + loc.getLongitude()+" poke:"+pokeList.size());
-//                            mMapWrapperFragment.setPokemonMarkers(pokeList);
                         }
-                        lon+=GRANULARITY;
+                    }else{
+                        Log.e("SCANSERVICE", "Error starting fetch: "+response.errorBody().string());
                     }
-                    lon=-SEARCH_RANGE;
-                    lat+=GRANULARITY;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
+
+
                 stopSelf();
                 return null;
             }
@@ -215,9 +198,13 @@ public class ScanService extends Service {
 
 
 
+
+
+
+
     }
 
-    private synchronized void importPokemon(List<CatchablePokemon> pkmns){
+    private synchronized void importPokemon(List<ResponsePokemon> pkmns){
         //First, let's check if we need to remove any pokemon from the list
         long currentTime = System.currentTimeMillis();
         List<DbPokemon> storedPokemons = SQLite.select()
@@ -233,23 +220,23 @@ public class ScanService extends Service {
         storedPokemons = SQLite.select()
                 .from(DbPokemon.class)
                 .queryList();
-        for(CatchablePokemon pkm : pkmns){
-            if (pkm.getExpirationTimestampMs() > 0) {
+        for(ResponsePokemon pkm : pkmns){
+            if (pkm.getExpirationTimestamp() > 0) {
                 boolean exists = false;
                 for (DbPokemon dbPkmn : storedPokemons) {
-                    if (dbPkmn.getSpawnPointId().equalsIgnoreCase(pkm.getSpawnPointId()) && dbPkmn.getEncounterId() == pkm.getEncounterId() && dbPkmn.getPokemonId() == pkm.getPokemonId().getNumber()) {
+                    if (dbPkmn.getSpawnPointId().equalsIgnoreCase(pkm.getKey().getSpawnPointId()) && dbPkmn.getEncounterId() == pkm.getEncounterId() && dbPkmn.getPokemonId() == pkm.getKey().getPokemonId()) {
                         exists = true;
                     }
                 }
                 if (!exists) {
                     DbPokemon dbPkmn = new DbPokemon();
                     dbPkmn.setEncounterId(pkm.getEncounterId());
-                    dbPkmn.setExpirationTimestamp(pkm.getExpirationTimestampMs());
+                    dbPkmn.setExpirationTimestamp(pkm.getExpirationTimestamp());
                     dbPkmn.setLatitude(pkm.getLatitude());
                     dbPkmn.setLongitude(pkm.getLongitude());
-                    dbPkmn.setPokemonId(pkm.getPokemonId().getNumber());
-                    dbPkmn.setSpawnPointId(pkm.getSpawnPointId());
-                    dbPkmn.setPokemonName(pkm.getPokemonId().name());
+                    dbPkmn.setPokemonId(pkm.getKey().getPokemonId());
+                    dbPkmn.setSpawnPointId(pkm.getKey().getSpawnPointId());
+                    dbPkmn.setPokemonName(pkm.getPokemonName());
                     dbPkmn.save();
 
                 }

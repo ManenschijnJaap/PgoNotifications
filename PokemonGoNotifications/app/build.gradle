@@ -19,6 +19,15 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    packagingOptions {
+        exclude 'META-INF/maven/com.squareup.moshi/moshi/pom.properties'
+        exclude 'META-INF/maven/com.google.protobuf/protobuf-java/pom.xml'
+        exclude 'META-INF/maven/com.squareup.okio/okio/pom.xml'
+        exclude 'META-INF/maven/com.annimon/stream/pom.properties'
+        exclude 'google/protobuf/any.proto'
+        exclude 'gpsoauth.properties'
+    }
 }
 
 def dbflow_version = "3.1.1"
@@ -42,6 +51,6 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.0.0'
     compile 'com.squareup.retrofit2:converter-gson:2.0.0'
     compile 'com.squareup.okhttp:logging-interceptor:2.6.0'
-    compile 'com.github.Grover-c13:PokeGOAPI-Java:2e14fab7f0'
+    compile 'com.github.Grover-c13:PokeGOAPI-Java:b0f594e2c2'
     compile 'com.android.support:multidex:1.0.0'
 }

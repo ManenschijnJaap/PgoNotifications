@@ -22,16 +22,26 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import com.google.android.gms.auth.GoogleAuthUtil;
 import com.moonshine.pokemongonotifications.Utils.UserPreferences;
+import com.moonshine.pokemongonotifications.model.LoginResponse;
 import com.moonshine.pokemongonotifications.network.GoogleManager;
 import com.moonshine.pokemongonotifications.network.GoogleService;
-import com.pokegoapi.auth.PtcLogin;
+//import com.pokegoapi.auth.GoogleAutoCredentialProvider;
+import com.moonshine.pokemongonotifications.network.RestClient;
+import com.pokegoapi.auth.PtcCredentialProvider;
 import com.pokegoapi.exceptions.LoginFailedException;
+import com.pokegoapi.exceptions.RemoteServerException;
+import com.pokegoapi.util.SystemTimeImpl;
 
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import POGOProtos.Networking.Envelopes.RequestEnvelopeOuterClass;
 import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 /**
  * A login screen that offers login via email/password.
@@ -88,8 +98,9 @@ public class LoginActivity extends AppCompatActivity {
                 showProgress(false);
                 Log.d(TAG, "authSuccessful() called with: authToken = [" + authToken + "]");
                 UserPreferences.saveToken(LoginActivity.this, authToken);
-                UserPreferences.setLoginType(LoginActivity.this, "google");
                 UserPreferences.saveRefreshToken(LoginActivity.this, refreshToken);
+                UserPreferences.setLoginType(LoginActivity.this, "google");
+                UserPreferences.setUniqueId(LoginActivity.this, UUID.randomUUID().toString());
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
 //                        MainActivity.start(LoginActivity.this, authToken, MainActivity.PROVIDER_GOOGLE);
@@ -114,7 +125,19 @@ public class LoginActivity extends AppCompatActivity {
         mGmailButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View v) {
-                mGoogleManager.authUser(mCallbackGoogle);
+//                attemptLoginGoogle();
+                RestClient.getInstance().getLoginUrl().enqueue(new Callback<LoginResponse>() {
+                    @Override
+                    public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                        LoginResponse login = response.body();
+                        GoogleAuthActivity.startForResult(LoginActivity.this, REQUEST_USER_AUTH, login.getLoginUrl(), "");
+                    }
+
+                    @Override
+                    public void onFailure(Call<LoginResponse> call, Throwable t) {
+                        //TODO handle
+                    }
+                });
             }
         });
 
@@ -170,7 +193,54 @@ public class LoginActivity extends AppCompatActivity {
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
+            mAuthTask = new UserLoginTask(email, password, "ptc");
+            mAuthTask.execute((Void) null);
+        }
+    }
+
+    private void attemptLoginGoogle() {
+        if (mAuthTask != null) {
+            return;
+        }
+
+        // Reset errors.
+        mEmailView.setError(null);
+        mPasswordView.setError(null);
+
+        // Store values at the time of the login attempt.
+        String email = mEmailView.getText().toString();
+        String password = mPasswordView.getText().toString();
+
+        boolean cancel = false;
+        View focusView = null;
+
+        // Check for a valid password, if the user entered one.
+        if (!TextUtils.isEmpty(password) && !isPasswordValid(password)) {
+            mPasswordView.setError(getString(R.string.error_invalid_password));
+            focusView = mPasswordView;
+            cancel = true;
+        }
+
+        // Check for a valid email address.
+        if (TextUtils.isEmpty(email)) {
+            mEmailView.setError(getString(R.string.error_field_required));
+            focusView = mEmailView;
+            cancel = true;
+        } else if (!isEmailValid(email)) {
+            mEmailView.setError(getString(R.string.error_invalid_email));
+            focusView = mEmailView;
+            cancel = true;
+        }
+
+        if (cancel) {
+            // There was an error; don't attempt login and focus the first
+            // form field with an error.
+            focusView.requestFocus();
+        } else {
+            // Show a progress spinner, and kick off a background task to
+            // perform the user login attempt.
+            showProgress(true);
+            mAuthTask = new UserLoginTask(email, password, "google");
             mAuthTask.execute((Void) null);
         }
     }
@@ -226,8 +296,12 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == RESULT_OK){
             if(requestCode == REQUEST_USER_AUTH){
-                showProgress(true);
-                mGoogleManager.requestToken(mDeviceCode, mCallbackGoogle);
+//                showProgress(true);
+//                mGoogleManager.requestToken(mDeviceCode, mCallbackGoogle);
+                UserPreferences.setLoginType(LoginActivity.this, "google");
+                UserPreferences.setUniqueId(LoginActivity.this, UUID.randomUUID().toString());
+                startActivity(new Intent(LoginActivity.this, MainActivity.class));
+                finish();
             }
         }
     }
@@ -241,10 +315,12 @@ public class LoginActivity extends AppCompatActivity {
 
         private final String mEmail;
         private final String mPassword;
+        private final String type;
 
-        UserLoginTask(String email, String password) {
+        UserLoginTask(String email, String password, String type) {
             mEmail = email;
             mPassword = password;
+            this.type = type;
         }
 
         @Override
@@ -256,11 +332,18 @@ public class LoginActivity extends AppCompatActivity {
                     .readTimeout(360, TimeUnit.SECONDS)
                     .build();
             try {
-                RequestEnvelopeOuterClass.RequestEnvelope.AuthInfo info = new PtcLogin(httpClient).login(mEmail, mPassword);
-                UserPreferences.saveToken(LoginActivity.this, info.getToken().getContents());
+                if(type.equalsIgnoreCase("ptc")) {
+                    new PtcCredentialProvider(httpClient, mEmail, mPassword, new SystemTimeImpl());
+                }else{
+//                    new GoogleAutoCredentialProvider(httpClient, mEmail, mPassword, new SystemTimeImpl());
+                }
                 UserPreferences.saveUsername(LoginActivity.this, mEmail);
-                UserPreferences.setLoginType(LoginActivity.this, "ptc");
+                UserPreferences.setPassword(LoginActivity.this, mPassword);
+                UserPreferences.setLoginType(LoginActivity.this, type);
+                UserPreferences.setUniqueId(LoginActivity.this, UUID.randomUUID().toString());
             } catch (LoginFailedException e) {
+                return false;
+            } catch (RemoteServerException e) {
                 return false;
             }
             //Login has succeeded, so we're good to go!

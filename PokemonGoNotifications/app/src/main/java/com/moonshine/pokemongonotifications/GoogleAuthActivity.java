@@ -7,10 +7,21 @@ import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
+
+import com.moonshine.pokemongonotifications.Utils.UserPreferences;
+import com.moonshine.pokemongonotifications.model.LoginResponse;
+import com.moonshine.pokemongonotifications.network.RestClient;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class GoogleAuthActivity extends AppCompatActivity {
@@ -57,6 +68,29 @@ public class GoogleAuthActivity extends AppCompatActivity {
                 }
             }
         };
+
+        final EditText code = (EditText) findViewById(R.id.auth_code);
+        Button submit = (Button) findViewById(R.id.submit);
+        submit.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(code.getText() != null) {
+                    String authcode = code.getText().toString();
+                    RestClient.getInstance().login(authcode).enqueue(new Callback<LoginResponse>() {
+                        @Override
+                        public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
+                            UserPreferences.saveToken(GoogleAuthActivity.this, response.body().getRefreshToken());
+                            sendResults();
+                        }
+
+                        @Override
+                        public void onFailure(Call<LoginResponse> call, Throwable t) {
+                            //todo handle
+                        }
+                    });
+                }
+            }
+        });
 
         WebSettings webSettings = webView.getSettings();
         webSettings.setJavaScriptEnabled(true);

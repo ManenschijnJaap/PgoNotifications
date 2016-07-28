@@ -127,8 +127,10 @@ public class RareTrackerFragment extends Fragment {
             // for ActivityCompat#requestPermissions for more details.
             return;
         }
-        final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        mGrid.setAdapter(new TrackerAdapter(getContext(), trackedPkmn, lastKnownLocation));
+        final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+        if(lastKnownLocation != null) {
+            mGrid.setAdapter(new TrackerAdapter(getContext(), trackedPkmn, lastKnownLocation));
+        }
     }
 
 }

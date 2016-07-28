@@ -40,8 +40,6 @@ import com.moonshine.pokemongonotifications.services.RefreshTokenService;
 import com.moonshine.pokemongonotifications.services.ScanService;
 import com.pokegoapi.api.PokemonGo;
 import com.pokegoapi.api.map.pokemon.CatchablePokemon;
-import com.pokegoapi.auth.GoogleLogin;
-import com.pokegoapi.auth.PtcLogin;
 import com.pokegoapi.exceptions.LoginFailedException;
 import com.pokegoapi.exceptions.RemoteServerException;
 import com.raizlabs.android.dbflow.sql.language.SQLite;
