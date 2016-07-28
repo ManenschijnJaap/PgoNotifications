@@ -31,8 +31,14 @@ public class UserPreferences {
         return getPreferences(context).getString(loginTypeKey, null);
     }
 
-    public static void clearPreferences(Context context){
-        getPreferences(context).edit().clear().commit();
+    public static void clearPreferences(Context context, boolean savePokemon) {
+        if (savePokemon) {
+            String pkmns = getNotificationIds(context);
+            getPreferences(context).edit().clear().commit();
+            updateNotificationIds(context, pkmns);
+        }else{
+            getPreferences(context).edit().clear().commit();
+        }
     }
 
     public static void saveToken(Context context, String token){

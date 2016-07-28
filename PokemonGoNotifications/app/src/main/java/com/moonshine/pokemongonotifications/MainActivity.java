@@ -4,6 +4,7 @@ import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
@@ -16,6 +17,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -266,17 +268,38 @@ public class MainActivity extends AppCompatActivity
             setTitle("Notifications");
             showFragment(NotificationPreferenceFragment.newInstance());
         } else if (id == R.id.nav_logout) {
-            UserPreferences.clearPreferences(this);
-            stopAlarm();
-            stopServices();
-            List<DbPokemon> storedPokemons = SQLite.select()
-                    .from(DbPokemon.class)
-                    .queryList();
-            for(DbPokemon pkmn : storedPokemons){
-                pkmn.delete();
-            }
-            startActivity(new Intent(this, LoginActivity.class));
-            finish();
+            new AlertDialog.Builder(this).setTitle("Logout").setMessage("Do you want to save your list of wanted pokemon?").setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    UserPreferences.clearPreferences(MainActivity.this, true);
+                    stopAlarm();
+                    stopServices();
+                    List<DbPokemon> storedPokemons = SQLite.select()
+                            .from(DbPokemon.class)
+                            .queryList();
+                    for(DbPokemon pkmn : storedPokemons){
+                        pkmn.delete();
+                    }
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                    finish();
+                }
+            }).setNegativeButton("No", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    UserPreferences.clearPreferences(MainActivity.this, false);
+                    stopAlarm();
+                    stopServices();
+                    List<DbPokemon> storedPokemons = SQLite.select()
+                            .from(DbPokemon.class)
+                            .queryList();
+                    for(DbPokemon pkmn : storedPokemons){
+                        pkmn.delete();
+                    }
+                    startActivity(new Intent(MainActivity.this, LoginActivity.class));
+                    finish();
+                }
+            }).show();
+
         } else if (id == R.id.nav_settings) {
             setTitle("Settings");
             showFragment(SettingsFragment.newInstance());
