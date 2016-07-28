@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 
@@ -174,6 +175,9 @@ public class ScanService extends Service {
                         }
                     }else{
                         Log.e("SCANSERVICE", "Error starting fetch: "+response.errorBody().string());
+                        if(response.errorBody().string().contains("AuthException")){
+                            new AlertDialog.Builder(getApplicationContext()).setTitle("Error").setMessage("Could not login to pokemon servers. Please log out and try again.").show();
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
