@@ -6,6 +6,7 @@ A simple pgo scanner that gives local notifications
 - Add option to persist wishlisht on logout
 - Move from AlarmManager to self invoking services
 - Create service that updates last known location (if needed)
+- Add indication when service is failing
 - Automate Google login
 - Redo login page
 - Add pokemon center recovery sound for notification!
@@ -14,4 +15,4 @@ A simple pgo scanner that gives local notifications
 
 #In progress
 - Reduce data usage: Currently working on a java API that will host the Pokemon (onGoing)
-- Add indication when service is failing
+
