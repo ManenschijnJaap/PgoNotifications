@@ -27,6 +27,7 @@
         <activity
             android:name=".MainActivity"
             android:label="Home"
+            android:launchMode="singleInstance"
             android:theme="@style/AppTheme.NoActionBar" />
         <activity
             android:name=".GoogleAuthActivity"
@@ -49,6 +50,10 @@
 
         <service
             android:name=".services.RefreshTokenService"
+            android:exported="false" />
+        <service
+            android:name=".services.LocationUpdateService"
+            android:enabled="true"
             android:exported="false"></service>
     </application>
 

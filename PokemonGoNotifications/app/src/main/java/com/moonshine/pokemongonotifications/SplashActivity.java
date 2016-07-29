@@ -17,7 +17,7 @@ public class SplashActivity extends AppCompatActivity {
         new Handler().postDelayed(new Runnable() {
             @Override
             public void run() {
-                if(UserPreferences.getToken(SplashActivity.this) != null){
+                if(UserPreferences.getRefreshToken(SplashActivity.this) != null || (UserPreferences.getUsername(SplashActivity.this) != null && UserPreferences.getPassword(SplashActivity.this) != null)){
                     //show main activity
                     startActivity(new Intent(SplashActivity.this, MainActivity.class));
                     finish();

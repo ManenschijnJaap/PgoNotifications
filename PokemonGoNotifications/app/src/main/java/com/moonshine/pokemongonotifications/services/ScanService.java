@@ -15,6 +15,7 @@ import android.location.LocationManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -61,6 +62,8 @@ public class ScanService extends Service {
     private LocationListener mListener;
     private AsyncTask<Void, Void, Void> scanner;
     private boolean fetchingPokemon = true;
+    boolean serviceRunning = true;
+    long timestamp;
 
     public ScanService() {
         super();
@@ -126,7 +129,7 @@ public class ScanService extends Service {
 
 
 
-        return super.onStartCommand(intent, flags, startId);
+        return START_STICKY;
     }
 
     @Nullable
@@ -150,52 +153,68 @@ public class ScanService extends Service {
 
             @Override
             protected Void doInBackground(Void... params) {
+                while(serviceRunning) {
+                    timestamp = System.currentTimeMillis();
+                    fetchingPokemon = true;
+                    Log.e("SCANNERSERVICE", "+++++++++++++++++++++++\nSTARTING NEW SCAN\n++++++++++++++++++++");
+                    Location loc = new Location(mLastLocation);
 
-                Location loc = new Location(mLastLocation);
+                    //TODO massive error handling!
+                    try {
+                        Response<Void> response = RestClient.getInstance().startFetchingPokemon(loc, getApplicationContext()).execute();
+                        if (response != null && response.isSuccessful()) {
+                            while (fetchingPokemon) {
+                                Thread.sleep(10000);
+                                Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
+                                if (pkmnResponse != null && pkmnResponse.isSuccessful()) {
+                                    if (pkmnResponse.body() != null) {
+                                        if (pkmnResponse.body().getPokemon() != null) {
+                                            importPokemon(pkmnResponse.body().getPokemon());
+                                        }
+                                        fetchingPokemon = pkmnResponse.body().isFindingPokemon();
+                                        if (fetchingPokemon) {
 
-                //TODO massive error handling!
-                try {
-                    Response<Void> response = RestClient.getInstance().startFetchingPokemon(loc, getApplicationContext()).execute();
-                    if (response != null && response.isSuccessful()){
-                        while(fetchingPokemon){
-                            Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
-                            if(pkmnResponse != null && pkmnResponse.isSuccessful()){
-                                if(pkmnResponse.body() != null){
-                                    if(pkmnResponse.body().getPokemon() != null) {
-                                        importPokemon(pkmnResponse.body().getPokemon());
+                                        } else {
+                                            Log.e("TAG", "Yay, the check works!");
+                                        }
                                     }
-                                    fetchingPokemon = pkmnResponse.body().isFindingPokemon();
-                                    if(fetchingPokemon){
-                                        Thread.sleep(10000);
-                                    }else{
-                                        Log.e("TAG", "Yay, the check works!");
-                                    }
+                                } else {
+                                    Log.e("SCANSERVICE", "Error getting pokemon: " + pkmnResponse.errorBody().string());
                                 }
-                            }else{
-                                Log.e("SCANSERVICE", "Error getting pokemon: "+pkmnResponse.errorBody().string());
+                            }
+                            long frequency= UserPreferences.getInterval(getApplicationContext()) * 60 * 1000; // in ms
+                            long endTime = System.currentTimeMillis();
+                            long diff = endTime - timestamp;
+                            frequency = frequency - diff;
+                            if(frequency < 60000){
+                                frequency = 60000;
+                            }
+                            try {
+                                Thread.sleep(frequency);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
+                        } else {
+                            Log.e("SCANSERVICE", "Error starting fetch: " + response.errorBody().string());
+                            if (response.errorBody().string().contains("AuthException")) {
+                                new AlertDialog.Builder(getApplicationContext()).setTitle("Error").setMessage("Could not login to pokemon servers. Please log out and try again.").show();
                             }
                         }
-                    }else{
-                        Log.e("SCANSERVICE", "Error starting fetch: "+response.errorBody().string());
-                        if(response.errorBody().string().contains("AuthException")){
-                            new AlertDialog.Builder(getApplicationContext()).setTitle("Error").setMessage("Could not login to pokemon servers. Please log out and try again.").show();
-                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+
                 }
 
 
-                stopSelf();
                 return null;
             }
 
             @Override
             protected void onPostExecute(Void aVoid) {
                 super.onPostExecute(aVoid);
-                ScanService.this.stopSelf();
             }
         };
         scanner.execute();

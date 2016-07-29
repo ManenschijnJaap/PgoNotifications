@@ -23,7 +23,7 @@ public class SettingsFragment extends Fragment {
 
     int step = 1;
     int max = 10;
-    int min = 2;
+    int min = 3;
     int value;
 
 

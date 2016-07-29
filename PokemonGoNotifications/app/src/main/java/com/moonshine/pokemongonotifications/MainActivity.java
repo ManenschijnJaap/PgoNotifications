@@ -38,6 +38,7 @@ import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
 import com.moonshine.pokemongonotifications.model.DbPokemon;
 import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
 import com.moonshine.pokemongonotifications.receivers.TokenRefreshReceiver;
+import com.moonshine.pokemongonotifications.services.LocationUpdateService;
 import com.moonshine.pokemongonotifications.services.RefreshTokenService;
 import com.moonshine.pokemongonotifications.services.ScanService;
 import com.pokegoapi.api.PokemonGo;
@@ -84,9 +85,6 @@ public class MainActivity extends AppCompatActivity
         mLastLocation.setLatitude(52.5196119d);//your coords of course
         mLastLocation.setLongitude(6.4204943d);
         checkPermissions();
-        if (UserPreferences.getLoginType(this).equalsIgnoreCase("google")){
-            periodicallyRefreshToken();
-        }
     }
 
     @Override
@@ -106,7 +104,6 @@ public class MainActivity extends AppCompatActivity
             stopAlarm();
             stopServices();
             if(UserPreferences.isScanEnabled(MainActivity.this)) {
-                periodicallyRefreshToken();
                 periodicallyStartService();
             }
         }
@@ -117,7 +114,6 @@ public class MainActivity extends AppCompatActivity
         public void onReceive(Context context, Intent intent) {
             if (UserPreferences.isScanEnabled(MainActivity.this)){
                 //enabled scan
-                periodicallyRefreshToken();
                 periodicallyStartService();
             }else{
                 stopAlarm();
@@ -140,6 +136,7 @@ public class MainActivity extends AppCompatActivity
         unregisterReceiver(startStopReceiver);
     }
 
+    @Deprecated
     private void periodicallyRefreshToken(){
         Intent intent = new Intent(MainActivity.this, TokenRefreshReceiver.class);
         PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
@@ -166,15 +163,17 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void periodicallyStartService(){
-        Intent intent = new Intent(MainActivity.this, PokemonReceiver.class);
-        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
-        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-
-        long frequency= UserPreferences.getInterval(this) * 60 * 1000; // in ms
-        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+//        Intent intent = new Intent(MainActivity.this, PokemonReceiver.class);
+//        PendingIntent pendingIntent = PendingIntent.getBroadcast(MainActivity.this, 0, intent, 0);
+//        AlarmManager alarmManager = (AlarmManager)getSystemService(Context.ALARM_SERVICE);
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.setTimeInMillis(System.currentTimeMillis());
+//
+//        long frequency= UserPreferences.getInterval(this) * 60 * 1000; // in ms
+//        alarmManager.setRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(), frequency, pendingIntent);
+        stopServices();
         startService(new Intent(this, ScanService.class));
+        startService(new Intent(this, LocationUpdateService.class));
     }
 
     private void stopAlarm(){
@@ -192,6 +191,7 @@ public class MainActivity extends AppCompatActivity
     private void stopServices(){
         stopService(new Intent(this, RefreshTokenService.class));
         stopService(new Intent(this, ScanService.class));
+        stopService(new Intent(this, LocationUpdateService.class));
     }
 
     @Override
@@ -272,7 +272,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     UserPreferences.clearPreferences(MainActivity.this, true);
-                    stopAlarm();
                     stopServices();
                     List<DbPokemon> storedPokemons = SQLite.select()
                             .from(DbPokemon.class)
@@ -287,7 +286,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void onClick(DialogInterface dialog, int which) {
                     UserPreferences.clearPreferences(MainActivity.this, false);
-                    stopAlarm();
                     stopServices();
                     List<DbPokemon> storedPokemons = SQLite.select()
                             .from(DbPokemon.class)
