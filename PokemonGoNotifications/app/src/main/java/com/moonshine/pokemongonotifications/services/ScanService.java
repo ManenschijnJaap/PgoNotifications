@@ -9,6 +9,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -297,6 +298,7 @@ public class ScanService extends Service {
                         .setTicker("New Message Alert!")
                         .setVibrate(new long[] { 0, 200, 150, 200, 150, 400 })
                         .setSound(soundUri)
+                        .setColor(Color.RED)
                         .setAutoCancel(true)
                         .setSmallIcon(R.mipmap.ic_launcher).build();
 

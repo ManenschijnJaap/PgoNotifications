@@ -46,7 +46,9 @@ public class LocationUpdateService extends Service {
             return;
         }
         mLocationManager.removeUpdates(mListener);
-        locationUpdater.cancel(true);
+        if(locationUpdater != null) {
+            locationUpdater.cancel(true);
+        }
     }
 
     @Override
