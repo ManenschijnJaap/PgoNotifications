@@ -2,8 +2,6 @@
 A simple pgo scanner that gives local notifications
 
 #Todo
-- Automate Google login
-- Redo login page
 - Add pokemon center recovery sound for notification!
 - Add a widget for 'rare' pokemon
 
