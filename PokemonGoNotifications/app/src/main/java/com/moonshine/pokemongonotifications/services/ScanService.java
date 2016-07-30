@@ -288,7 +288,7 @@ public class ScanService extends Service {
                 intent.putExtra("openRare", true);
                 PendingIntent pendingIntent = PendingIntent.getActivity(getApplicationContext(), 0,
                         intent, 0);
-                Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/" + R.raw.pokemon_recovery);
+                Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/raw/pokemon_recovery");
                 Notification notification = builder.setContentTitle("Pokemon Notification")
                         .setContentIntent(pendingIntent)
                         .setContentText("Found "+ pkmn.getPokemonName() +" in your area!")
