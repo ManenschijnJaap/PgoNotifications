@@ -2,7 +2,7 @@
 A simple pgo scanner that gives local notifications
 
 #Todo
-- Add pokemon center recovery sound for notification!
+- Fix notification icon for Lollipop so target sdk can be increased
 - Add a widget for 'rare' pokemon
 
 #In progress
