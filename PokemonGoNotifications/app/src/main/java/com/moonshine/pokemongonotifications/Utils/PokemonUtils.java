@@ -10,6 +10,7 @@ import android.graphics.drawable.LayerDrawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.support.v4.app.ActivityCompat;
+import android.util.Log;
 import android.util.TypedValue;
 
 import com.moonshine.pokemongonotifications.model.DbPokemon;
@@ -121,7 +122,7 @@ public class PokemonUtils {
             }
             return new ArrayList<DbPokemon>(wantedPokemons.subList(0, amount - 1));
         }
-        final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+        final Location lastKnownLocation = manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
         Collections.sort(wantedPokemons, new Comparator<DbPokemon>() {
             @Override
             public int compare(DbPokemon lhs, DbPokemon rhs) {

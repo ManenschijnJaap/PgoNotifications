@@ -28,4 +28,7 @@ public interface PGoApiService {
     @GET("google/login")
     Call<LoginResponse> loginWithGoogle(@Query("access")String access);
 
+    @GET("version")
+    Call<Void> checkVersion(@Query("version")String version);
+
 }

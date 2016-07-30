@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,6 +17,8 @@ import com.moonshine.pokemongonotifications.Utils.PokemonUtils;
 import com.moonshine.pokemongonotifications.model.DbPokemon;
 import com.pokegoapi.api.pokemon.Pokemon;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -31,6 +34,23 @@ public class TrackerAdapter extends BaseAdapter {
         this.mContext = context;
         this.pokemonList = pokemonList;
         this.currentLocation = location;
+        Collections.sort(pokemonList, new Comparator<DbPokemon>() {
+            @Override
+            public int compare(DbPokemon lhs, DbPokemon rhs) {
+                if (lhs.getLocation() == null && rhs.getLocation() != null){
+                    return 1;
+                }
+                if (lhs.getLocation() != null && rhs.getLocation() == null){
+                    return -1;
+                }
+                if (lhs.getLocation().distanceTo(currentLocation) < rhs.getLocation().distanceTo(currentLocation)){
+                    return -1;
+                }else if(lhs.getLocation().distanceTo(currentLocation) > rhs.getLocation().distanceTo(currentLocation)){
+                    return 1;
+                }
+                return 0;
+            }
+        });
     }
 
 

@@ -11,6 +11,7 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.SystemClock;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -36,6 +37,7 @@ import com.moonshine.pokemongonotifications.fragments.RareTrackerFragment;
 import com.moonshine.pokemongonotifications.fragments.SettingsFragment;
 import com.moonshine.pokemongonotifications.fragments.TrackerFragment;
 import com.moonshine.pokemongonotifications.model.DbPokemon;
+import com.moonshine.pokemongonotifications.network.RestClient;
 import com.moonshine.pokemongonotifications.receivers.PokemonReceiver;
 import com.moonshine.pokemongonotifications.receivers.TokenRefreshReceiver;
 import com.moonshine.pokemongonotifications.services.LocationUpdateService;
@@ -53,6 +55,9 @@ import java.util.concurrent.TimeUnit;
 
 import POGOProtos.Networking.Envelopes.RequestEnvelopeOuterClass;
 import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -127,6 +132,26 @@ public class MainActivity extends AppCompatActivity
         super.onResume();
         registerReceiver(intervalChangeReceiver, new IntentFilter("com.moonshine.intervalChanged"));
         registerReceiver(startStopReceiver, new IntentFilter("com.moonshine.startStopChanged"));
+        RestClient.getInstance().checkVersion().enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                //all is fine!
+                if (!response.isSuccessful()){
+                    new android.app.AlertDialog.Builder(MainActivity.this).setTitle("Wrong version").setMessage("This version of the app is not supported. Please update it!").setNeutralButton("Ok", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            finish();
+                        }
+                    }).show();
+                }
+            }
+
+            @Override
+            public void onFailure(Call<Void> call, Throwable t) {
+
+            }
+        });
     }
 
     @Override

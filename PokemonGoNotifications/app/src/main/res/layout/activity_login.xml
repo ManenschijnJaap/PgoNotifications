@@ -42,7 +42,7 @@
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
                 android:gravity="center_horizontal"
-                android:text="Currently, only Pokemon Trainer Club account login is supported. Please enter your username and password below to login.\n\nBE AWARE!\nDo not use your main account for this. Use at your own risk!"/>
+                android:text="You can login through Google or with a Pokemon Trainer Account.To login with PTC, please enter your username and password below and click sign in.\nTo login with Google, please click sign in using Google.\n\nBE AWARE!\nDo not use your main account for this. Use at your own risk!"/>
 
             <android.support.design.widget.TextInputLayout
                 android:layout_width="match_parent"
@@ -92,16 +92,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:text="Sign in using gmail"
+                android:text="Sign in using Google"
                 android:textStyle="bold" />
 
         </LinearLayout>
     </ScrollView>
-
-    <WebView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="20dp"
-        android:visibility="gone"
-        android:id="@+id/webView"></WebView>
 </RelativeLayout>

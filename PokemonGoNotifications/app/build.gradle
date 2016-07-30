@@ -53,4 +53,5 @@ dependencies {
     compile 'com.squareup.okhttp:logging-interceptor:2.6.0'
     compile 'com.github.Grover-c13:PokeGOAPI-Java:b0f594e2c2'
     compile 'com.android.support:multidex:1.0.0'
+    compile group: 'org.jsoup', name: 'jsoup', version: '1.7.2'
 }

@@ -143,6 +143,7 @@ public class ScanService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        serviceRunning = false;
         if(scanner != null) {
             scanner.cancel(true);
         }
@@ -160,50 +161,57 @@ public class ScanService extends Service {
                     Location loc = new Location(mLastLocation);
 
                     //TODO massive error handling!
-                    try {
-                        Response<Void> response = RestClient.getInstance().startFetchingPokemon(loc, getApplicationContext()).execute();
-                        if (response != null && response.isSuccessful()) {
-                            while (fetchingPokemon) {
-                                Thread.sleep(10000);
-                                Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
-                                if (pkmnResponse != null && pkmnResponse.isSuccessful()) {
-                                    if (pkmnResponse.body() != null) {
-                                        if (pkmnResponse.body().getPokemon() != null) {
-                                            importPokemon(pkmnResponse.body().getPokemon());
-                                        }
-                                        fetchingPokemon = pkmnResponse.body().isFindingPokemon();
-                                        if (fetchingPokemon) {
+                    if (UserPreferences.getLoginType(getApplicationContext()) != null) {
+                        try {
+                            Response<Void> response = RestClient.getInstance().startFetchingPokemon(loc, getApplicationContext()).execute();
+                            if (response != null && response.isSuccessful()) {
+                                while (fetchingPokemon) {
+                                    Thread.sleep(1000);
+                                    Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
+                                    if (pkmnResponse != null && pkmnResponse.isSuccessful()) {
+                                        if (pkmnResponse.body() != null) {
+                                            if (pkmnResponse.body().getPokemon() != null) {
+                                                importPokemon(pkmnResponse.body().getPokemon());
+                                            }
+                                            fetchingPokemon = pkmnResponse.body().isFindingPokemon();
+                                            if (fetchingPokemon) {
 
-                                        } else {
-                                            Log.e("TAG", "Yay, the check works!");
+                                            } else {
+                                                Log.e("TAG", "Yay, the check works!");
+                                            }
                                         }
+                                    } else {
+                                        Log.e("SCANSERVICE", "Error getting pokemon: " + pkmnResponse.errorBody().string());
                                     }
-                                } else {
-                                    Log.e("SCANSERVICE", "Error getting pokemon: " + pkmnResponse.errorBody().string());
+                                    Thread.sleep(9000);
+                                }
+                                long frequency = UserPreferences.getInterval(getApplicationContext()) * 60 * 1000; // in ms
+                                long endTime = System.currentTimeMillis();
+                                long diff = endTime - timestamp;
+                                frequency = frequency - diff;
+                                if (frequency < 60000) {
+                                    frequency = 60000;
+                                }
+                                List<DbPokemon> checkList = PokemonUtils.getNearbyPokemon(getApplicationContext(), 10, false);
+                                if(checkList == null || checkList.isEmpty()){
+                                    frequency = 0;
+                                }
+                                try {
+                                    Thread.sleep(frequency);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            } else {
+                                Log.e("SCANSERVICE", "Error starting fetch: " + response.errorBody().string());
+                                if (response.errorBody().string().contains("AuthException")) {
+                                    new AlertDialog.Builder(getApplicationContext()).setTitle("Error").setMessage("Could not login to pokemon servers. Please log out and try again.").show();
                                 }
                             }
-                            long frequency= UserPreferences.getInterval(getApplicationContext()) * 60 * 1000; // in ms
-                            long endTime = System.currentTimeMillis();
-                            long diff = endTime - timestamp;
-                            frequency = frequency - diff;
-                            if(frequency < 60000){
-                                frequency = 60000;
-                            }
-                            try {
-                                Thread.sleep(frequency);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
-                        } else {
-                            Log.e("SCANSERVICE", "Error starting fetch: " + response.errorBody().string());
-                            if (response.errorBody().string().contains("AuthException")) {
-                                new AlertDialog.Builder(getApplicationContext()).setTitle("Error").setMessage("Could not login to pokemon servers. Please log out and try again.").show();
-                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
                     }
 
                 }

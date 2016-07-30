@@ -20,6 +20,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class RestClient {
     private static RestClient instance;
     private PGoApiService service;
+    private static final String VERSION = "v2";
 
     private RestClient(){
         OkHttpClient client = new OkHttpClient.Builder()
@@ -68,5 +69,9 @@ public class RestClient {
 
     public Call<LoginResponse> login(String access){
         return service.loginWithGoogle(access);
+    }
+
+    public Call<Void> checkVersion(){
+        return service.checkVersion(VERSION);
     }
 }

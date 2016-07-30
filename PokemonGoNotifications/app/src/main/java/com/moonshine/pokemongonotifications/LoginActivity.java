@@ -126,6 +126,7 @@ public class LoginActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
 //                attemptLoginGoogle();
+                showProgress(true);
                 RestClient.getInstance().getLoginUrl().enqueue(new Callback<LoginResponse>() {
                     @Override
                     public void onResponse(Call<LoginResponse> call, Response<LoginResponse> response) {
@@ -296,13 +297,15 @@ public class LoginActivity extends AppCompatActivity {
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == RESULT_OK){
             if(requestCode == REQUEST_USER_AUTH){
-//                showProgress(true);
+                showProgress(false);
 //                mGoogleManager.requestToken(mDeviceCode, mCallbackGoogle);
                 UserPreferences.setLoginType(LoginActivity.this, "google");
                 UserPreferences.setUniqueId(LoginActivity.this, UUID.randomUUID().toString());
                 startActivity(new Intent(LoginActivity.this, MainActivity.class));
                 finish();
             }
+        }else{
+            showProgress(false);
         }
     }
 
