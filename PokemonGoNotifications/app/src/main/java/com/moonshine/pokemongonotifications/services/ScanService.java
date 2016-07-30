@@ -155,6 +155,7 @@ public class ScanService extends Service {
             @Override
             protected Void doInBackground(Void... params) {
                 while(serviceRunning) {
+                    int amountOfFetches = 0;
                     timestamp = System.currentTimeMillis();
                     fetchingPokemon = true;
                     Log.e("SCANNERSERVICE", "+++++++++++++++++++++++\nSTARTING NEW SCAN\n++++++++++++++++++++");
@@ -168,6 +169,7 @@ public class ScanService extends Service {
                                 while (fetchingPokemon) {
                                     Thread.sleep(1000);
                                     Response<PokemonResponse> pkmnResponse = RestClient.getInstance().getPokemon(getApplicationContext()).execute();
+                                    amountOfFetches++;
                                     if (pkmnResponse != null && pkmnResponse.isSuccessful()) {
                                         if (pkmnResponse.body() != null) {
                                             if (pkmnResponse.body().getPokemon() != null) {
@@ -193,7 +195,7 @@ public class ScanService extends Service {
                                     frequency = 60000;
                                 }
                                 List<DbPokemon> checkList = PokemonUtils.getNearbyPokemon(getApplicationContext(), 10, false);
-                                if(checkList == null || checkList.isEmpty()){
+                                if(checkList == null || checkList.isEmpty() || amountOfFetches < 3){
                                     frequency = 0;
                                 }
                                 try {
