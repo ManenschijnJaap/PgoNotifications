@@ -28,7 +28,7 @@ public class RestClient {
                 .build();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl("https://pkmngoapi.herokuapp.com")
+                .baseUrl("http://37.97.207.135:8080/PGoApi-0.1.0/")
                 .addConverterFactory(GsonConverterFactory.create())
                 .client(client)
                 .build();
